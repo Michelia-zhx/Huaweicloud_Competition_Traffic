@@ -15,12 +15,12 @@ import math
 road_name = ['NanPing_W2E','NanPing_E2W','FuLong_S2N','FuLong_N2S','LiuXian_W2E','LiuXian_E2W','YuLong_S2N',
              'YuLong_N2S','XinQu_S2N','XinQu_N2S','ZhiYuan_S2N','ZhiYuan_N2S']
 assert(len(road_name)==12)
-dict_road_pos = {'NanPing_W2E':(114.015136,22.587219),'NanPing_E2W':(114.015136,22.587219),
-                 'FuLong_S2N':(114.015666,22.603308),'FuLong_N2S':(114.015666,22.603308),
-                 'LiuXian_W2E':(114.027811,22.612045),'LiuXian_E2W':(114.027811,22.612045),
-                 'YuLong_S2N':(114.027826,22.605467),'YuLong_N2S':(114.027826,22.605467),
-                 'XinQu_S2N':(114.03428,22.604796),'XinQu_N2S':(114.03428,22.604796),
-                 'ZhiYuan_S2N':(114.025425,22.608589),'ZhiYuan_N2S':(114.025425,22.608589)
+dict_road_pos = {'NanPing_W2E':(114.015136,22.587219,90),'NanPing_E2W':(114.015136,22.587219,270),
+                 'FuLong_S2N':(114.015666,22.603308,0),'FuLong_N2S':(114.015666,22.603308,180),
+                 'LiuXian_W2E':(114.027811,22.612045,90),'LiuXian_E2W':(114.027811,22.612045,270),
+                 'YuLong_S2N':(114.027826,22.605467,0),'YuLong_N2S':(114.027826,22.605467,180),
+                 'XinQu_S2N':(114.03428,22.604796,0),'XinQu_N2S':(114.03428,22.604796,180),
+                 'ZhiYuan_S2N':(114.025425,22.608589,0),'ZhiYuan_N2S':(114.025425,22.608589,180)
                  }
 
 #--------------count from GPS--------
@@ -87,12 +87,13 @@ for row in range(gps.shape[0]):
         pos_jing = eval(info[0])
         pos_wei = eval(info[1])
         timepoint = int(info[4])
+        direction = eval(info[3])
         rd = int(timepoint/time_slice)*time_slice
-        #calculate distance
+        #calculate distance      and math.fabs(direction-dict_road_pos[road_name[j]][2])<15
         temp_dist = [0 for i in range(12)]
         nearby = False
         for j in range(len(dict_road_pos)):
-            if(cal_dist(pos_jing, pos_wei, dict_road_pos[road_name[j]][0], dict_road_pos[road_name[j]][1])<1e-4):
+            if(cal_dist(pos_jing, pos_wei, dict_road_pos[road_name[j]][0], dict_road_pos[road_name[j]][1])<1e-3 and math.fabs(direction-dict_road_pos[road_name[j]][2])<40):
                 nearby = True
                 temp_dist[j] += 1
                 try:
