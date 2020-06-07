@@ -89,13 +89,9 @@ def predict(road_id,timestamp,train_TTI,test_gps,lst):
     re = rf.predict(feature)
     
     return re
-        
-        
-        
-    
 
 for i in range(len(road_name)):
-    path = "D:/HW_AI_traffic/Huaweicloud_Competition_Traffic/datasets/dataset_"+road_name[i]+".csv"
+    path = "D:/HW_AI_traffic/Huaweicloud_Competition_Traffic/datasets/train_"+road_name[i]+".csv"
     df = pd.read_csv(path)
     df = df.sort_values(by = 'timestamp')
     train(df,lst[i])
@@ -132,11 +128,3 @@ for row in range(0,noLabel.shape[0]-2,3):
 noLabel['TTI'] = label_predict
 noLabel = noLabel.drop('time',axis = 1)
 noLabel = noLabel.drop('id_road',axis = 1)
-noLabel.to_csv("D:/test_data/TTI3.csv",index = None)
-
-
-
-
-
-
-    
