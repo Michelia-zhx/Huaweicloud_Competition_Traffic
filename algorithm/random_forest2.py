@@ -8,6 +8,7 @@ Created on Fri Jun  5 16:40:26 2020
 import pandas as pd
 import numpy as np
 from sklearn.ensemble import RandomForestRegressor
+from sklearn import svm
 import time
 import datetime
 
@@ -39,6 +40,20 @@ rf9 = RandomForestRegressor()
 rf10 = RandomForestRegressor()
 rf11 = RandomForestRegressor()
 rf12 = RandomForestRegressor()
+'''
+rf1 = svm.SVR()
+rf2 = svm.SVR()
+rf3 = svm.SVR()
+rf4 = svm.SVR()
+rf5 = svm.SVR()
+rf6 = svm.SVR()
+rf7 = svm.SVR()
+rf8 = svm.SVR()
+rf9 = svm.SVR()
+rf10 = svm.SVR()
+rf11 = svm.SVR()
+rf12 = svm.SVR()
+'''
 lst = []
 lst.append(rf1)
 lst.append(rf2)
@@ -63,6 +78,9 @@ def train(df,rf1):
             lst.append(df.iloc[row-i][3]) #speed
             lst.append(df.iloc[row-i][2])  #num
             lst.append(df.iloc[row-i][1])#TTI
+            ts = df.iloc[row-i][0]
+            x = ts%(60*60*24)
+            lst.append(x)
         label.append([df.iloc[row][1],df.iloc[row+1][1],df.iloc[row+2][1]])
         feature.append(lst)
     rf1.fit(feature,label)
@@ -83,6 +101,8 @@ def predict(road_id,timestamp,train_TTI,test_gps,lst):
         lst_t.append(speed)
         lst_t.append(car_num)
         lst_t.append(TTI)
+        y = ts%(86400)
+        lst_t.append(y)
         #print('b')
    # print('a')
     feature.append(lst_t)
@@ -95,7 +115,7 @@ def predict(road_id,timestamp,train_TTI,test_gps,lst):
     
 
 for i in range(len(road_name)):
-    path = "D:/HW_AI_traffic/Huaweicloud_Competition_Traffic/datasets/dataset_"+road_name[i]+".csv"
+    path = "D:/HW_AI_traffic/Huaweicloud_Competition_Traffic/datasets/train_"+road_name[i]+".csv"
     df = pd.read_csv(path)
     df = df.sort_values(by = 'timestamp')
     train(df,lst[i])
@@ -129,10 +149,13 @@ for row in range(0,noLabel.shape[0]-2,3):
     label_predict.append(x[0][0])
     label_predict.append(x[0][1])
     label_predict.append(x[0][2])
+    #x = x.tolist()
+    #label_predict.extend(x)
 noLabel['TTI'] = label_predict
 noLabel = noLabel.drop('time',axis = 1)
 noLabel = noLabel.drop('id_road',axis = 1)
-noLabel.to_csv("D:/test_data/TTI3.csv",index = None)
+noLabel.to_csv("D:/test_data/TTI5.csv",index = None)
+
 
 
 
