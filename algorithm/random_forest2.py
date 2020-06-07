@@ -109,10 +109,6 @@ def predict(road_id,timestamp,train_TTI,test_gps,lst):
     re = rf.predict(feature)
     
     return re
-        
-        
-        
-    
 
 for i in range(len(road_name)):
     path = "D:/HW_AI_traffic/Huaweicloud_Competition_Traffic/datasets/train_"+road_name[i]+".csv"
@@ -153,6 +149,9 @@ for row in range(0,noLabel.shape[0]-2,3):
     #label_predict.extend(x)
 noLabel['TTI'] = label_predict
 noLabel = noLabel.drop('time',axis = 1)
+<<<<<<< HEAD:algorithm/random_forest.py
+noLabel = noLabel.drop('id_road',axis = 1)
+=======
 noLabel = noLabel.drop('id_road',axis = 1)
 noLabel.to_csv("D:/test_data/TTI5.csv",index = None)
 
@@ -163,3 +162,4 @@ noLabel.to_csv("D:/test_data/TTI5.csv",index = None)
 
 
     
+>>>>>>> 3dd3b0bd40552515e04ab9aa04ea29cf1f7a7416:algorithm/random_forest2.py

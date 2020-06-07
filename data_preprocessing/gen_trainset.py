@@ -28,10 +28,15 @@ dict_road_index = {276183: 0, 276184: 1, 275911: 2,  275912: 3,
 # ---------------load the data------------------------
 processed_data_file = ["../processed_train_data/pro_20191201_20191220.csv", "../processed_train_data/pro_201910_11.csv", 
                        "../processed_train_data/pro_201901_201903.csv", "../processed_test_data/pro_toPredict_gps.csv"]
-file_index = 0
+file_index = 3
 processed_data = pd.read_csv(processed_data_file[file_index], sep=',')
 processed_data.columns = ['timestamp', 'NanPing_W2E', 'NanPing_E2W', 'FuLong_S2N', 'FuLong_N2S', 'LiuXian_W2E', 'LiuXian_E2W',
                           'YuLong_S2N', 'YuLong_N2S', 'XinQu_S2N', 'XinQu_N2S', 'ZhiYuan_S2N', 'ZhiYuan_N2S']
+
+processed_data = processed_data.sort_values('timestamp').reset_index().drop('index', axis=1)
+data_len = len(processed_data)
+processed_data = processed_data.set_index('timestamp')
+
 # ---------------normalize the time slice-------------
 processed_data = processed_data.sort_values('timestamp').reset_index().drop('index', axis=1)
 data_len = len(processed_data)
@@ -50,9 +55,9 @@ for i in time_slice:
 
 processed_data = processed_data.sort_values('timestamp')
 
-# ---------------generate training set and test set------------------------
+# --------------------generate test set------------------------
 # a sample should contain road_id, timestamp, car_count, TTI, spead
-label = pd.read_csv("../traffic/train_TTI.csv").set_index('time')
+label = pd.read_csv("../processed_train_data/pro_20191201_20191220.csv").set_index('time')
 lst_lst = []
 
 for i in range(len(road_name)):
@@ -81,5 +86,5 @@ for i in range(len(road_name)):
     sample_df.columns = ['timestamp', 'TTI', 'car_count', 'speed']
     sample_df = sample_df.set_index('timestamp')
     print(sample_df)
-    file_name = "../datasets/dataset_"+str(road_name[i])+".csv"
+    file_name = "../datasets/train_"+str(road_name[i])+".csv"
     pd.DataFrame.to_csv(sample_df, file_name, sep=',')
