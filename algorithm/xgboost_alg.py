@@ -9,6 +9,9 @@ import pandas as pd
 import numpy as np
 import xgboost as xgb
 from sklearn.model_selection import learning_curve
+from sklearn.metrics import accuracy_score
+from sklearn.metrics import mean_absolute_error
+from sklearn.model_selection import train_test_split
 # from sklearn.linear_model import LinearRegression
 # from sklearn.tree import DecisionTreeRegressor
 # from xgboost import XGBRegressor
@@ -31,16 +34,15 @@ dict_road_index = {276183: 0, 276184: 1, 275911: 2,  275912: 3,
                    276268: 8, 276269: 9, 276737: 10, 276738: 11
                    }
 
-pre_df_lst = []
 models = []
 
 def gen_train(train_data):
     feature = []
     label = [[], [], []]
-    for row in range(6,train_data.shape[0]-2, 3):
+    for row in range(6, train_data.shape[0]-2):
         tmp = []
-        for i in range(1,7):
-            # tmp.append((train_data.iloc[row-i][0] % 86400) % 600)  # time
+        for i in range(6,0,-1):
+            tmp.append((train_data.iloc[row-i][0] % 86400) / 600) # related to time
             tmp.append(train_data.iloc[row-i][1])  # TTI
             tmp.append(train_data.iloc[row-i][2])  # num
             tmp.append(train_data.iloc[row-i][3])  # speed
@@ -52,7 +54,7 @@ def gen_train(train_data):
     label = np.array(label)
     return feature, label
 
-def train(train_X, train_y, road_index):
+def train(train_X, train_y, eval_X, eval_y, road_index):
     # params = {
     #     'booster': 'gbtree',
     #     'objective': 'reg:gamma',
@@ -75,8 +77,13 @@ def train(train_X, train_y, road_index):
     # return bst
     model = [0, 0, 0]
     for i in range(3):
-        model[i] = xgb.XGBRegressor(max_depth=5, learning_rate=0.1, n_estimators=160, objective='reg:gamma')
-        model[i].fit(train_X, train_y[i])
+        model[i] = xgb.XGBRegressor(max_depth=6, learning_rate=0.1, n_estimators=160, min_child_weight=1,
+                                    subsample=0.8, colsample_bytree=0.8, gamma=0,
+                                    reg_alpha=0, reg_lambda=1)
+        model[i].fit(train_X, train_y[i],
+                    eval_set = [(eval_X, eval_y[i])],
+                    eval_metric='mae',
+                    early_stopping_rounds = 10)
         model.append(model[i])
     return model
 
@@ -88,6 +95,7 @@ def gen_test(model, pred_df):
         feature = []
         tmp = []
         for i in range(0,6):
+            tmp.append((pred_df.iloc[row+i][0] % 86400) / 600) # related to time
             tmp.append(pred_df.iloc[row+i][1])  # TTI
             tmp.append(pred_df.iloc[row+i][2])  # num
             tmp.append(pred_df.iloc[row+i][3])  # speed
@@ -101,24 +109,33 @@ def gen_test(model, pred_df):
     # print(pred_df)
     return pred_df
 
+def evaluate(model, X, y):
+    mae = 0
+    for i in range(3):
+        y_pred = model[i].predict(X)
+        mae += mean_absolute_error(y[i], y_pred)
+    print("mae:", mae/3)
+    return mae/3
+
 def main():
-    for i in range(len(road_name)):
+    mae = 0
+    pre_df_lst = [0,0,0,0,0,0,0,0,0,0,0,0]
+    for i in range(12):
         train_data = pd.read_csv("../datasets/train_"+road_name[i]+".csv", sep=',')
         train_data = train_data.sort_values(by = 'timestamp')
         test_data = pd.read_csv("../datasets/test_"+road_name[i]+".csv", sep=',')
         test_data = test_data.sort_values(by = 'timestamp')
         X, y = gen_train(train_data)
-        # train_size = int(X.shape[0] * 0.8)
-        # train_X = X[0:train_size]
-        # train_y = y[0:train_size]
-        # eval_X  = X[train_size:]
-        # eval_y  = y[train_size:]
-        # dtrain  = xgb.DMatrix(train_X, label=train_y)
-        # deval   = xgb.DMatrix(eval_X, label=eval_y)
-        model = train(X, y, i)
-        pre_df = gen_test(model, test_data)
-        pre_df_lst.append(pre_df)
-        pd.DataFrame.to_csv(pre_df, road_name[i]+"_pred.csv", sep=',')
+        y = y.T
+        train_X, eval_X, train_y, eval_y = train_test_split(X,y,test_size=0.25, random_state=0)
+        train_y = train_y.T
+        eval_y = eval_y.T
+        model = train(train_X, train_y, eval_X, eval_y, i)
+        mae += evaluate(model, eval_X, eval_y)
+        pre_df_lst[i] = gen_test(model, test_data)
+        pd.DataFrame.to_csv(pre_df_lst[i], "../../predict/xgb_pred_by_road/"+road_name[i]+"_pred.csv", sep=',')
+    print(mae / 12)
+
     noLabel = pd.read_csv("../traffic/toPredict_noLabel.csv", sep=',')
     noLabel['pred'] = None
     for row in range(noLabel.shape[0]):
@@ -135,7 +152,7 @@ def main():
             noLabel.loc[row, 'pred'] = pre_TTI
         except:
             continue
-    pd.DataFrame.to_csv(noLabel['pred'], "pred_TTI.csv", sep=',')
+    pd.DataFrame.to_csv(noLabel['pred'], "../../predict/xgb_pred_by_road/pred_TTI2.csv", sep=',')
 
 if __name__ == "__main__":
     main()
