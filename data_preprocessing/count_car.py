@@ -72,8 +72,8 @@ def triArea(point1,point2,point3):
     return re
 
 def inArea(point1,point2,point3,point4,p):
-    r1 = triArea(point1,point2,p)+triArea(point2,point3,p)+triArea(point3,point4,p)+triArea(point4,point1,p)
-    r2  = triArea(point1,point2,point3) + triArea(point3,point4,point1)
+    r1 = triArea(point1,point2,p)+triArea(point1,point3,p)+triArea(point3,point4,p)+triArea(point4,point2,p)
+    r2  = triArea(point1,point2,point3) + triArea(point3,point4,point2)
     return r1==r2 or math.fabs(r1-r2)<1e-10
 
 # ---------------load the data-----------------
