@@ -34,15 +34,42 @@ dict_road_index = {276183: 0, 276184: 1, 275911: 2,  275912: 3,
 models = []
 
 def train(train_X, train_y, eval_X, eval_y, road_index):
+    # param = {'booster': 'gbtree',
+    #          'max_depth': 6,
+    #          'eta': 0.1,
+    #          'objective': 'reg:gamma',
+    #          'gamma': 0.1,
+    #          'lambda': 3,
+    #          'subsample': 0.7,
+    #          'colsample_bytree': 0.7,
+    #          'min_child_weight': 3,
+    #          'seed': 1000
+    #          }
     model = [0, 0, 0]
     for i in range(3):
-        model[i] = xgb.XGBRegressor(max_depth=6, learning_rate=0.1, n_estimators=500, min_child_weight=1,
-                                    subsample=0.8, colsample_bytree=0.8, gamma=0,
-                                    reg_alpha=0, reg_lambda=1)
+        # dtrain = xgb.DMatrix(train_X, label=train_y[i])
+        # deval = xgb.DMatrix(eval_X, label=eval_y[i])
+        # evallist=([(dtrain, 'train'), (deval, 'eval')])
+        # num_rounds=10000
+        # model[i] = xgb.train(param, dtrain,
+        #                      num_boost_round=10000,
+        #                      evals=evallist,
+        #                      early_stopping_rounds=10000
+        #                      )
+        model[i] = xgb.XGBRegressor(max_depth=10,
+                                    learning_rate=0.05,
+                                    n_estimators=150,
+                                    min_child_weight=1,
+                                    subsample=0.8,
+                                    colsample_bytree=0.8,
+                                    gamma=0,
+                                    reg_alpha=0,
+                                    reg_lambda=1
+                                    )
         model[i].fit(train_X, train_y[i],
-                    eval_set = [(eval_X, eval_y[i])],
-                    eval_metric='mae')
-        model.append(model[i])
+                     eval_set=[(eval_X, eval_y[i])],
+                     eval_metric='mae',
+                     early_stopping_rounds=5000)
     return model
 
 def gen_test(model, pred_df):
@@ -78,17 +105,18 @@ def evaluate(model, X, y):
 def main():
     mae = 0
     pre_df_lst = [0,0,0,0,0,0,0,0,0,0,0,0]
-    for i in range(1):
+    for i in range(12):
         X_filename = 'train_array/X_' + road_name[i] + '.npy'
         X = np.load(X_filename)
         y_filename = 'train_array/y_' + road_name[i] + '.npy'
         y = np.load(y_filename)
         y = y.T
         train_X, eval_X, train_y, eval_y = train_test_split(X,y,test_size=0.25, random_state=0)
+        print(train_X[0], train_y[0])
         train_y = train_y.T
         eval_y = eval_y.T
         model = train(train_X, train_y, eval_X, eval_y, i)
-        mae += evaluate(model, eval_X, eval_y)
+        # mae += evaluate(model, eval_X, eval_y)
         test_filename = '../datasets/test_' + road_name[i] + '.csv'
         test_data = pd.read_csv(test_filename, sep=',')
         pre_df_lst[i] = gen_test(model, test_data)
