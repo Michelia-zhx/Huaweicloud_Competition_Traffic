@@ -56,20 +56,21 @@ def train(train_X, train_y, eval_X, eval_y, road_index):
         #                      evals=evallist,
         #                      early_stopping_rounds=10000
         #                      )
-        model[i] = xgb.XGBRegressor(max_depth=10,
-                                    learning_rate=0.05,
-                                    n_estimators=150,
-                                    min_child_weight=1,
-                                    subsample=0.8,
-                                    colsample_bytree=0.8,
-                                    gamma=0,
-                                    reg_alpha=0,
-                                    reg_lambda=1
+        model[i] = xgb.XGBRegressor(max_depth=6,
+                                    learning_rate=0.1,
+                                    n_estimators=600,
+                                    min_child_weight=5,
+                                    subsample=0.7,
+                                    colsample_bytree=0.7,
+                                    gamma=0.1,
+                                    reg_alpha=1,
+                                    reg_lambda=1,
+                                    silence=True
                                     )
         model[i].fit(train_X, train_y[i],
                      eval_set=[(eval_X, eval_y[i])],
                      eval_metric='mae',
-                     early_stopping_rounds=5000)
+                     early_stopping_rounds=500)
     return model
 
 def gen_test(model, pred_df):
@@ -106,9 +107,9 @@ def main():
     mae = 0
     pre_df_lst = [0,0,0,0,0,0,0,0,0,0,0,0]
     for i in range(12):
-        X_filename = 'train_array/X_' + road_name[i] + '.npy'
+        X_filename = 'train_array/X_12_' + road_name[i] + '.npy'
         X = np.load(X_filename)
-        y_filename = 'train_array/y_' + road_name[i] + '.npy'
+        y_filename = 'train_array/y_12_' + road_name[i] + '.npy'
         y = np.load(y_filename)
         y = y.T
         train_X, eval_X, train_y, eval_y = train_test_split(X,y,test_size=0.25, random_state=0)
@@ -138,7 +139,7 @@ def main():
             noLabel.loc[row, 'pred'] = pre_TTI
         except:
             continue
-    pd.DataFrame.to_csv(noLabel['pred'], "../../predict/xgb_pred/pred_TTI3.csv", sep=',')
+    pd.DataFrame.to_csv(noLabel['pred'], "../../predict/xgb_pred/pred_TTI4.csv", sep=',')
 
 if __name__ == "__main__":
     main()

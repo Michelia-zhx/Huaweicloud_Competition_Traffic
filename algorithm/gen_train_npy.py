@@ -32,27 +32,27 @@ def gen_train(train_data):
     for row in range(6, train_data.shape[0]-2):
         tmp = []
         for i in range(6,0,-1):
-            tmp.append((train_data.iloc[row-i][1] % 86400) / 600) # related to time
-            tmp.append(train_data.iloc[row-i][2])  # TTI
-            tmp.append(train_data.iloc[row-i][3])  # num
-            tmp.append(train_data.iloc[row-i][4])  # speed
+            tmp.append((train_data.iloc[row-i][0] % 86400) / 600) # related to time
+            tmp.append(train_data.iloc[row-i][1])  # TTI
+            tmp.append(train_data.iloc[row-i][2])  # num
+            tmp.append(train_data.iloc[row-i][3])  # speed
         feature.append(tmp)
-        label[0].append(train_data.iloc[row][2])
-        label[1].append(train_data.iloc[row+1][2])
-        label[2].append(train_data.iloc[row+2][2])
+        label[0].append(train_data.iloc[row][1])
+        label[1].append(train_data.iloc[row+1][1])
+        label[2].append(train_data.iloc[row+2][1])
     feature = np.array(feature)
     label = np.array(label)
     return feature, label
 
 def main():
     for i in range(len(road_name)):
-        train_data = pd.read_csv("../datasets/train_"+road_name[i]+".csv", sep=',')
+        train_data = pd.read_csv("../datasets/train_12_"+road_name[i]+".csv", sep=',')
         train_data = train_data.sort_values(by = 'timestamp')
         print(train_data)
         X, y = gen_train(train_data)
-        X_filename = 'train_array/X_' + road_name[i] + '.npy'
+        X_filename = 'train_array/X_12_' + road_name[i] + '.npy'
         np.save(X_filename, X)
-        y_filename = 'train_array/y_' + road_name[i] + '.npy'
+        y_filename = 'train_array/y_12_' + road_name[i] + '.npy'
         np.save(y_filename, y)
         print("save", i)
 
