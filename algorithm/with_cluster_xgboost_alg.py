@@ -35,7 +35,7 @@ dict_road_index = {276183: 0, 276184: 1, 275911: 2,  275912: 3,
                    }
 
 models = []
-
+lzc = []
 def gen_train(train_data):
     feature = []
     label = [[], [], []]
@@ -54,7 +54,7 @@ def gen_train(train_data):
     label = np.array(label)
     return feature, label
 
-def train(train_X, train_y, eval_X, eval_y, cluster_X,cluster_eval,road_index):
+def train(train_X, train_y, eval_X, eval_y, cluster_X,cluster_eval,road_index,N_CLUSTERS):
     # params = {
     #     'booster': 'gbtree',
     #     'objective': 'reg:gamma',
@@ -79,7 +79,7 @@ def train(train_X, train_y, eval_X, eval_y, cluster_X,cluster_eval,road_index):
     #train_y = train_y.T
     #eval_y = eval_y.T
     #print(train_y.shape)
-    for clu in range(1):
+    for clu in range(N_CLUSTERS):
         train_x_temp = []
         eval_x_temp = []
         train_y_temp = []
@@ -88,8 +88,6 @@ def train(train_X, train_y, eval_X, eval_y, cluster_X,cluster_eval,road_index):
             if cluster_X[i]==clu:
                 train_x_temp.append(train_X[i])
                 train_y_temp.append(train_y[i])
-            else:
-                assert(0)
                 
         for i in range(cluster_eval.shape[0]):
             if cluster_eval[i]==clu:
@@ -117,7 +115,23 @@ def train(train_X, train_y, eval_X, eval_y, cluster_X,cluster_eval,road_index):
     models.append(model_total)
     return model_total
 
-def gen_test(model, pred_df):
+def gen_test(test_data):
+    feature = []
+    for row in range(0, test_data.shape[0]-5,6):
+        tmp = []
+        for i in range(6):
+            tmp.append((test_data.iloc[row+i][0] % 86400) / 600) # related to time
+            tmp.append(test_data.iloc[row+i][1])  # TTI
+            tmp.append(test_data.iloc[row+i][2])  # num
+            tmp.append(test_data.iloc[row+i][3])  # speed
+        feature.append(tmp)
+    feature = np.array(feature)
+    return feature
+    
+    
+    
+    
+'''   
     pred_df['pred1'] = None
     pred_df['pred2'] = None
     pred_df['pred3'] = None
@@ -138,10 +152,11 @@ def gen_test(model, pred_df):
             pred_df.loc[row,column] = ypred
     # print(pred_df)
     return pred_df
+'''
 
-def evaluate(model, X, y,cluster):
+def evaluate(model, X, y,cluster,N_CLUSTERS):
     mae = 0
-    for clu in range(1):
+    for clu in range(N_CLUSTERS):
         X_t = []
         y_t = [[],[],[]]
         for i in range(cluster.shape[0]):
@@ -155,52 +170,86 @@ def evaluate(model, X, y,cluster):
             y_pred = model[clu][i].predict(X_t)
             mae += mean_absolute_error(y_t[i], y_pred)*y_pred.shape[0]
     
-    print("mae:", mae/X.shape[0])
-    return mae/X.shape[0]
+    print("mae:", mae/(X.shape[0]))
+    return mae/(X.shape[0])
+
+def predict(model,X_test,cluster_label,clu_number):
+    lst = []
+    for i in range(X_test.shape[0]):
+        clu = cluster_label[i]
+        tti1 = model[clu][0].predict(np.array([X_test[i]]))
+        tti2 = model[clu][1].predict(np.array([X_test[i]]))
+        tti3 = model[clu][2].predict(np.array([X_test[i]]))
+        lst.extend([tti1,tti2,tti3,0,0,0])
+    return lst
+        
+        
+        
+            
+                
 
 def main():
     mae = 0
+    #pre_df_lst = [0,0,0,0,0,0,0,0,0,0,0,0]
     pre_df_lst = [0,0,0,0,0,0,0,0,0,0,0,0]
+    
     for i in range(12):
         train_data = pd.read_csv("D:/test_data/train_data/train_"+road_name[i]+".csv", sep=',')
         train_data = train_data.sort_values(by = 'timestamp')
         test_data = pd.read_csv("D:/test_data/train_data/test_"+road_name[i]+".csv", sep=',')
         test_data = test_data.sort_values(by = 'timestamp')
         X, y = gen_train(train_data)#np array
+        X_test = gen_test(test_data)
         y = y.T
         #cluster num calculation
-        kmeans_model = KMeans(n_clusters = 1)
-        kmeans_model.fit(X)
+        X_total = np.vstack((X,X_test))
+        N_CLUSTERS = 1
+        kmeans_model = KMeans(n_clusters = N_CLUSTERS)
+        kmeans_model.fit(X_total)
         cluster_label = kmeans_model.labels_
         #print(cluster_label)
         
-        train_X, eval_X, train_y, eval_y,cluster_X,cluster_y = train_test_split(X,y,cluster_label,test_size=0.25, random_state=0)
+        train_X, eval_X, train_y, eval_y,cluster_X,cluster_y = train_test_split(X,y,cluster_label[:X.shape[0]],test_size=0.25, random_state=1591545677)
         
         
-        model = train(train_X, train_y, eval_X, eval_y, cluster_X,cluster_y,i)
-        mae += evaluate(model, eval_X, eval_y,cluster_y)
+        model = train(train_X, train_y, eval_X, eval_y, cluster_X,cluster_y,i,N_CLUSTERS)
+        mae += evaluate(model, eval_X, eval_y,cluster_y,N_CLUSTERS)
+        #print(X_test)
+        pre_df = predict(model,X_test,cluster_label[X.shape[0]:],N_CLUSTERS)
+        test_data['predict'] = pre_df
+        df = pd.DataFrame()
+        df['TTI'] = None
+        for row in range(0,test_data.shape[0]-5,6):
+            tss = test_data.iloc[row+5][0]
+            df.loc[tss+600] = test_data.iloc[row][4]
+            df.loc[tss+600*2] = test_data.iloc[row+1][4]
+            df.loc[tss+600*3] = test_data.iloc[row+2][4]
+        pre_df_lst[i] = df
         #pre_df_lst[i] = gen_test(model, test_data)
         #pd.DataFrame.to_csv(pre_df_lst[i], "D:/test_data/"+road_name[i]+"_pred.csv", sep=',')
     print(mae / 12)
+    print(pre_df_lst[0])
+    #lzc = pre_df_lst[0]
     
-'''
+
     noLabel = pd.read_csv("D:/HW_AI_traffic/Huaweicloud_Competition_Traffic/traffic/toPredict_noLabel.csv", sep=',')
-    noLabel['pred'] = None
+    result = pd.DataFrame()
+    result['TTI'] = None
     for row in range(noLabel.shape[0]):
         road_id = noLabel.loc[row, 'id_road']
+        num = dict_road_index[road_id]
         time_str = noLabel.loc[row, 'time']
         timeArray = time.strptime(time_str, "%Y-%m-%d %H:%M:%S")
         timestamp = time.mktime(timeArray)
-        column = 'pred' + str(row % 3 + 1)
-        choose_row = timestamp - (3600 + (row % 3) * 600)
+        #print(timestamp)
         try:
-            pre_TTI = pre_df_lst[dict_road_index[road_id]].set_index('timestamp')
-            pre_TTI = pre_TTI.loc[choose_row, column]
-            # print(pre_TTI)
-            noLabel.loc[row, 'pred'] = pre_TTI
+            x = pre_df_lst[num].loc[timestamp]['TTI']
+            result.loc[row] = x
         except:
-            continue
-    pd.DataFrame.to_csv(noLabel['pred'], "D:/test_data/pred_TTI3.csv", sep=',')
-'''
+            assert(0)
+    #print(result)
+    result.to_csv("D:/test_data/TTI13.csv")
+    #pd.DataFrame.to_csv(noLabel['pred'], "D:/test_data/pred_TTI3.csv", sep=',')
+
 if __name__ == "__main__":
     main()
