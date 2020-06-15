@@ -57,16 +57,91 @@ $$
 
 ### Sec. 5 方法
 
+在经过预处理和特征工程之后
+
+### Sec. 6 方法分析
+
+### Sec. 7 算法
+
+### Sec. 8 算法分析
+
+### Sec. 9 数值结果
+
+实验环境：windows + Intel Core i5
+
+
+
+### Sec. 10 讨论
+
+* 聚类
+* 降维
+* 拼接有效性
+
+### Sec. 11 结论
+
 
 
 ### Sec. 12 致谢
 
-感谢助教老师提供了针对数据竞赛的阅读材料。
+感谢助教老师提供了针对数据竞赛的阅读材料和撰写论文的建议。
 
-#### 参考文献
+### Sec. 13 参考文献
 
 [1] Leo Breiman. Random Forests. In Machine Learning, 45(1):5-32, 2001. 
 
 [2] Tianqi Chen and Carlos Guestrin. XGBoost: A scalable tree boosting system. In Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining, pages 785–794. ACM, 2016.
 
 [3] Guolin Ke, Qi Meng, Thomas Finley, Taifeng Wang, Wei Chen, Weidong Ma, Qiwei Ye, Tie-yan Liu. LightGBM: A highly efficient gradient boosting decision tree. In Advances in Neural Information Processing Systems, pages 3149–3157, 2017. 
+
+### Sec. 14 附录
+
+使用git来管理我们的代码，github项目地址：https://github.com/Michelia-zhx/Huaweicloud_Competition_Traffic
+
+项目结构：项目树状图，（tree一下截屏）
+
+**algorithm** : 不同算法的应用于本次TTI预测问题的代码
+
+* train_array: 读入训练集的中间结果
+* gen_train_npy.py ： 产生中间结果，暂时存到train_array中
+* lightgbm.py: 使用lightGBM处理回归问题
+  * train(train_df, test_df, params)   使用lightgbm进行训练
+  * predict(road_id,timestamp,train_TTI,test_gps, models )使用训练出的lightgbm模型进行预测
+* lstm.py： 使用LSTM模型处理回归问题
+* random_forest2.py：使用随机森林处理回归问题
+  * train(df,rf1)  使用随机森林在训练集上训练
+  * predict(road_id, timestamp, train_TTI, test_gps,lst) 利用lst中的模型对road_id在timestamp时的TTI进行预测
+* with_cluster_xgboost_alg.py：使用带聚类的XGBoost处理回归问题
+  * gen_train：把数据经过特征工程变为24维的输入向量
+  * gen_test：把测试数据经过特征工程变为24维的输入向量
+  * train：训练模型
+  * evaluate：使用model在X上进行评价
+  * predict：使用model对测试集进行预测
+* xgboost_alg.py：使用XGBoost处理回归问题
+  * train(train_X, train_y, eval_X, eval_y, road_index)： 对road_index路口，使用train_X，train_y作为训练集，使用eval_X, eval_y作为验证集，进行训练。
+  * gen_test(model, pred_df)： 进行特征工程，并对测试集产生预测结果
+  * evaluate(model,X,y): 评价model在X上的mae误差
+
+**data_preprocessing** : 数据预处理的代码
+
+* count_car.py：通过对每10分钟经过各个路口的网约车计数，得到以十分钟为粒度的车流量数据
+* gen_testset.py：产生每个路口的测试集
+* gen_trainset.py：产生每个路口的训练集
+
+**datasets**： 将训练数据和测试数据按照路口划分之后保存的csv结果
+
+**photo**：根据20191201-20191220.csv中部分网约车的GPS信息，绘制出的GPS图形
+
+* draw_road.py：绘制出20191201-20191220.csv中一部分网约车GPS图形，以经度作为横轴，维度作为纵轴
+
+**processed_test_data**： 根据测试集上网约车GPS整理出的各个10分钟内每个路口的车流量
+
+**processed_train_data**：根据训练集上网约车GPS整理出的各个时刻每个路口的车流量
+
+**traffic**：部分训练集和测试集数据
+
+**README.md**: 项目背景和题目要求
+
+### Sec 15. 小组分工
+
+* 181220067 张含笑：
+* 181220038 吕志存：
