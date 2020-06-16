@@ -48,7 +48,6 @@ def main():
     for i in range(len(road_name)):
         train_data = pd.read_csv("../datasets/train_12_"+road_name[i]+".csv", sep=',')
         train_data = train_data.sort_values(by = 'timestamp')
-        print(train_data)
         X, y = gen_train(train_data)
         X_filename = 'train_array/X_12_' + road_name[i] + '.npy'
         np.save(X_filename, X)
