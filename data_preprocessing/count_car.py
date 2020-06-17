@@ -80,7 +80,7 @@ def inArea(point1,point2,point3,point4,p):
 read_file_name = ["../../20191201_20191220.csv", "../../201910_11.csv", "../../201901_201903.csv", "../../traffic/toPredict_train_gps.csv"]
 save_file_name = ["../processed_train_data/pro_20191201_20191220.csv", "../processed_train_data/pro_201910_11.csv", 
                   "../processed_train_data/pro_201901_201903.csv", "../processed_test_data/pro_toPredict_gps.csv"]
-file_index = 3
+file_index = 2
 read_file = read_file_name[file_index]
 save_file = save_file_name[file_index]
 raw_data = pd.read_csv(read_file, iterator = True);
