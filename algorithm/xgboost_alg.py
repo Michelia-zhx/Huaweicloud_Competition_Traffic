@@ -59,7 +59,7 @@ def train(train_X, train_y, eval_X, eval_y, road_index):
         model[i].fit(train_X, train_y[i],
                      eval_set=[(eval_X, eval_y[i])],
                      eval_metric='mae',
-                     early_stopping_rounds=500)
+                     early_stopping_rounds=10)
     return model
 
 def gen_test(model, pred_df):

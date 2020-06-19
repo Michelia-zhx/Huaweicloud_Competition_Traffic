@@ -1,0 +1,25 @@
+\begin{thebibliography}{1}
+
+\bibitem{ref1}
+Leo Breiman.
+\newblock Random forests.
+\newblock {\em Machine Learning, 45(1):5-32}, 2001.
+
+\bibitem{ref2}
+Tianqi Chen and Carlos Guestrin.
+\newblock Xgboost: A scalable tree boosting system.
+\newblock {\em In Proceedings of the 22nd ACM SIGKDD International Conference
+  on Knowledge Discovery and Data Mining}, page 785–794, 2016.
+
+\bibitem{ref3}
+Thomas~Finley Guolin~Ke, Qi~Meng.
+\newblock Lightgbm: A highly efficient gradient boosting decision tree.
+\newblock {\em In Advances in Neural Information Processing Systems}, page
+  3149–3157, 2017.
+
+\bibitem{ref4}
+Gilles Louppe.
+\newblock Understanding random forest from theory to practice.
+\newblock {\em Machine Learning}, 2015.
+
+\end{thebibliography}
