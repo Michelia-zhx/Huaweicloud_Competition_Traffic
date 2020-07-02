@@ -27,7 +27,7 @@ dict_road_index = {276183: 0, 276184: 1, 275911: 2,  275912: 3,
 
 # ---------------load the data------------------------
 processed_data_file = ["../processed_train_data/pro_20191201_20191220.csv", "../processed_train_data/pro_201910_11.csv", 
-                       "../processed_train_data/pro_201901_201903.csv", "../processed_test_data/pro_toPredict_gps.csv"]
+                       "../processed_train_data/pro_201901_201903.csv", "../processed_test_data/stage2_pro_toPredict_gps.csv"]
 file_index = 3
 processed_data = pd.read_csv(processed_data_file[file_index], sep=',')
 processed_data.columns = ['timestamp', 'NanPing_W2E', 'NanPing_E2W', 'FuLong_S2N', 'FuLong_N2S', 'LiuXian_W2E', 'LiuXian_E2W',
@@ -39,7 +39,7 @@ processed_data = processed_data.set_index('timestamp')
 
 # ---------------generate training set and test set------------------------
 # a sample should contain road_id, timestamp, car_count, TTI, spead
-label = pd.read_csv("../traffic/toPredict_train_TTI.csv").set_index('time')
+label = pd.read_csv("../stage2_data/stage2/toPredict_train_TTI_stage2.csv").set_index('time')
 lst_lst = []
 
 for i in range(len(road_name)):
@@ -56,7 +56,7 @@ for index, row in label.iterrows():
         data_row = processed_data.loc[timestamp]
         car_count = data_row[dict_road_id[road_id]]
     except:
-        continue
+        car_count = 1
     sample = np.array([timestamp, tti, car_count, speed])
     lst_lst[dict_road_index[road_id]].append(sample)
 
@@ -66,5 +66,5 @@ for i in range(len(road_name)):
     sample_df.columns = ['timestamp', 'TTI', 'car_count', 'speed']
     sample_df = sample_df.set_index('timestamp')
     print(sample_df)
-    file_name = "../datasets/test_"+str(road_name[i])+".csv"
+    file_name = "../datasets/stage2_test_"+str(road_name[i])+".csv"
     pd.DataFrame.to_csv(sample_df, file_name, sep=',')

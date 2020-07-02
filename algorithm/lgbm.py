@@ -136,15 +136,15 @@ def predict(road_id,timestamp,train_TTI,test_gps,models):
 def main():
     for name in range(len(road_name)):
         print(road_name[name])
-        path = "D:/HW_AI_traffic/Huaweicloud_Competition_Traffic/datasets/train_"+road_name[name]+".csv"
+        path = "../datasets/train_0103_"+road_name[name]+".csv"
         train_df = pd.read_csv(path)
         test_df = pd.read_csv(path)
         train_df = train_df.sort_values(by ='timestamp')
         test_df = test_df.sort_values(by='timestamp')
         train(train_df,test_df,params)
         
-    noLabel = pd.read_csv("D:/HW_AI_traffic/Huaweicloud_Competition_Traffic/traffic/toPredict_noLabel.csv")
-    train_TTI = pd.read_csv('D:/HW_AI_traffic/Huaweicloud_Competition_Traffic/traffic/toPredict_train_TTI.csv')
+    noLabel = pd.read_csv("../stage2_data/stage2/toPredict_noLabel_stage2.csv")
+    train_TTI = pd.read_csv('../stage2_data/stage2/toPredict_train_TTI_stage2.csv')
     timestamps = []
     for row in range(train_TTI.shape[0]):
         tss1 = train_TTI.iloc[row][3]
@@ -152,7 +152,7 @@ def main():
         timestamp = int(time.mktime(timeArray))
         timestamps.append(timestamp)
     train_TTI['timestamp'] = timestamps
-    test_gps = pd.read_csv('D:/HW_AI_traffic/Huaweicloud_Competition_Traffic/processed_test_data/pro_toPredict_gps.csv')
+    test_gps = pd.read_csv('../processed_test_data/stage2_pro_toPredict_gps.csv')
     extend_name = ['times']
     extend_name.extend(road_name)
     test_gps.columns = extend_name
@@ -173,13 +173,15 @@ def main():
     noLabel['TTI'] = predict_label
     noLabel = noLabel.drop('time',axis = 1)
     noLabel = noLabel.drop('id_road',axis = 1)
-    noLabel.to_csv("D:/test_data/TTI5.csv",index = None)
+    noLabel.to_csv("../model_result/lgbm.csv",index = None)
         
-        
+       
 main()
+'''
 tti5 = pd.read_csv('D:/test_data/TTI5.csv')
 tti3 =pd.read_csv('D:/test_data/pred_TTI2.csv')
 error = 0
 for row in range(tti5.shape[0]):
     error += math.fabs(tti5.iloc[row][1]-tti3.iloc[row][1])
 print(error/tti5.shape[0])
+'''

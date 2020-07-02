@@ -19,6 +19,7 @@ import matplotlib.pyplot as plt
 import time
 from copy import deepcopy
 from sklearn.cluster import KMeans
+from sklearn.decomposition import PCA
 #---------------------------const value -----------------------------
 road_name = ['NanPing_W2E', 'NanPing_E2W', 'FuLong_S2N', 'FuLong_N2S', 'LiuXian_W2E', 'LiuXian_E2W',
              'YuLong_S2N', 'YuLong_N2S', 'XinQu_S2N', 'XinQu_N2S', 'ZhiYuan_S2N', 'ZhiYuan_N2S']
@@ -98,7 +99,10 @@ def train(train_X, train_y, eval_X, eval_y, cluster_X,cluster_eval,road_index,N_
         train_y_temp =train_y_temp.T
         eval_y_temp = eval_y_temp.T
         model = [0, 0, 0]
+        start_time = time.time()
+        #print("hhhhhhhhhh")
         for i in range(3):
+            #print("aaaaaaaaaaaaa")
             model[i] = xgb.XGBRegressor(max_depth=6, learning_rate=0.1, n_estimators=160, min_child_weight=1,
                                     subsample=0.8, colsample_bytree=0.8, gamma=0,
                                     reg_alpha=0, reg_lambda=1)
@@ -111,9 +115,14 @@ def train(train_X, train_y, eval_X, eval_y, cluster_X,cluster_eval,road_index,N_
                     eval_set = [(eval_x_temp, eval_y_temp[i])],
                     eval_metric='mae',
                     early_stopping_rounds = 10)
+        end_time = time.time()
+       # print("eeeeeeeeeeeee")
+        time.sleep(3)
         model_total.append(model)
+    #print("---------++++++++++++")
     models.append(model_total)
-    return model_total
+    #time.sleep(10)
+    return (model_total,end_time-start_time)
 
 def gen_test(test_data):
     feature = []
@@ -192,7 +201,8 @@ def main():
     mae = 0
     #pre_df_lst = [0,0,0,0,0,0,0,0,0,0,0,0]
     pre_df_lst = [0,0,0,0,0,0,0,0,0,0,0,0]
-    
+    time_cost = 0
+
     for i in range(12):
         train_data = pd.read_csv("../datasets/train_0103_"+road_name[i]+".csv", sep=',')
         train_data = train_data.sort_values(by = 'timestamp')
@@ -201,6 +211,13 @@ def main():
         X, y = gen_train(train_data)#np array
         X_test = gen_test(test_data)
         y = y.T
+        #PCA 
+        pca1 = PCA(n_components = 20)
+        pca2 = PCA(n_components = 20)
+        X = pca1.fit_transform(X)
+        X_test = pca2.fit_transform(X_test)
+        
+        
         #cluster num calculation
         X_total = np.vstack((X,X_test))
         N_CLUSTERS = 1
@@ -209,13 +226,15 @@ def main():
         cluster_label = kmeans_model.labels_
         #print(cluster_label)
         
-        train_X, eval_X, train_y, eval_y,cluster_X,cluster_y = train_test_split(X,y,cluster_label[:X.shape[0]],test_size=0.25, random_state=1591545677)
+        train_X, eval_X, train_y, eval_y,cluster_X,cluster_y = train_test_split(X,y,cluster_label[:X.shape[0]],test_size=0.25,random_state=1591545677)
         
         
-        model = train(train_X, train_y, eval_X, eval_y, cluster_X,cluster_y,i,N_CLUSTERS)
+        (model,time_add) = train(train_X, train_y, eval_X, eval_y, cluster_X,cluster_y,i,N_CLUSTERS)
+        time_cost += time_add
         mae += evaluate(model, eval_X, eval_y,cluster_y,N_CLUSTERS)
         #print(X_test)
         pre_df = predict(model,X_test,cluster_label[X.shape[0]:],N_CLUSTERS)
+        #print(len(pre_df),test_data.shape[0])
         test_data['predict'] = pre_df
         df = pd.DataFrame()
         df['TTI'] = None
@@ -228,10 +247,10 @@ def main():
         #pre_df_lst[i] = gen_test(model, test_data)
         #pd.DataFrame.to_csv(pre_df_lst[i], "D:/test_data/"+road_name[i]+"_pred.csv", sep=',')
     print(mae / 12)
-    print(pre_df_lst[0])
+    #print(pre_df_lst[0])
     #lzc = pre_df_lst[0]
     
-
+    
     noLabel = pd.read_csv("../stage2_data/stage2/toPredict_noLabel_stage2.csv", sep=',')
     result = pd.DataFrame()
     result['TTI'] = None
@@ -247,8 +266,9 @@ def main():
             result.loc[row] = x
         except:
             assert(0)
+    #print(time_cost)
     #print(result)
-    result.to_csv("../model_result/xgb.csv")
+    result.to_csv("../model_result/pca.csv")
     #pd.DataFrame.to_csv(noLabel['pred'], "D:/test_data/pred_TTI3.csv", sep=',')
 
 if __name__ == "__main__":

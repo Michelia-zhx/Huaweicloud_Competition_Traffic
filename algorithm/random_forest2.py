@@ -111,12 +111,12 @@ def predict(road_id,timestamp,train_TTI,test_gps,lst):
     return re
 
 for i in range(len(road_name)):
-    path = "D:/HW_AI_traffic/Huaweicloud_Competition_Traffic/datasets/train_"+road_name[i]+".csv"
+    path = "../datasets/train_0103_"+road_name[i]+".csv"
     df = pd.read_csv(path)
     df = df.sort_values(by = 'timestamp')
     train(df,lst[i])
   
-test_gps = pd.read_csv('D:/HW_AI_traffic/Huaweicloud_Competition_Traffic/processed_test_data/pro_toPredict_gps.csv')
+test_gps = pd.read_csv('../processed_test_data/stage2_pro_toPredict_gps.csv')
 extend_name = ['times']
 extend_name.extend(road_name)
 test_gps.columns = extend_name
@@ -125,8 +125,8 @@ test_gps = test_gps.drop('times',axis = 1)
 test_gps = test_gps.sort_index()
 
 
-noLabel = pd.read_csv('D:/HW_AI_traffic/Huaweicloud_Competition_Traffic/traffic/toPredict_noLabel.csv')
-train_TTI = pd.read_csv('D:/HW_AI_traffic/Huaweicloud_Competition_Traffic/traffic/toPredict_train_TTI.csv')
+noLabel = pd.read_csv('../stage2_data/stage2/toPredict_noLabel_stage2.csv')
+train_TTI = pd.read_csv('../stage2_data/stage2/toPredict_train_TTI_stage2.csv')
 timestamps = []
 for row in range(train_TTI.shape[0]):
     tss1 = train_TTI.iloc[row][3]
@@ -149,17 +149,6 @@ for row in range(0,noLabel.shape[0]-2,3):
     #label_predict.extend(x)
 noLabel['TTI'] = label_predict
 noLabel = noLabel.drop('time',axis = 1)
-<<<<<<< HEAD:algorithm/random_forest.py
 noLabel = noLabel.drop('id_road',axis = 1)
-=======
-noLabel = noLabel.drop('id_road',axis = 1)
-noLabel.to_csv("D:/test_data/TTI5.csv",index = None)
+noLabel.to_csv("../model_result/rf.csv",index = None)
 
-
-
-
-
-
-
-    
->>>>>>> 3dd3b0bd40552515e04ab9aa04ea29cf1f7a7416:algorithm/random_forest2.py

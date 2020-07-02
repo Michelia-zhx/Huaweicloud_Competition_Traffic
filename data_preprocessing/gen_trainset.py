@@ -27,7 +27,7 @@ dict_road_index = {276183: 0, 276184: 1, 275911: 2,  275912: 3,
 
 # ---------------load the data------------------------
 processed_data_file = ["../processed_train_data/pro_20191201_20191220.csv", "../processed_train_data/pro_201910_11.csv", 
-                       "../processed_train_data/pro_201901_201903.csv", "../processed_test_data/pro_toPredict_gps.csv"]
+                       "../processed_train_data/pro_201901_201903.csv", "../stage2/pro_toPredict_gps.csv"]
 file_index = 2
 processed_data = pd.read_csv(processed_data_file[file_index], sep=',')
 processed_data.columns = ['timestamp', 'NanPing_W2E', 'NanPing_E2W', 'FuLong_S2N', 'FuLong_N2S', 'LiuXian_W2E', 'LiuXian_E2W',
