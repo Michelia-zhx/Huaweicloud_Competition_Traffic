@@ -55,7 +55,7 @@ def gen_train(train_data):
     label = np.array(label)
     return feature, label
 
-def train(train_X, train_y, eval_X, eval_y, cluster_X,cluster_eval,road_index,N_CLUSTERS):
+def train(train_X, train_y, eval_X, eval_y,road_index):
     # params = {
     #     'booster': 'gbtree',
     #     'objective': 'reg:gamma',
@@ -76,53 +76,49 @@ def train(train_X, train_y, eval_X, eval_y, cluster_X,cluster_eval,road_index,N_
     # model_name = road_name[road_index] + ".model"
     # bst.save_model(model_name)
     # return bst
-    model_total = []
-    #train_y = train_y.T
-    #eval_y = eval_y.T
+    #model_total = []
+    train_y = train_y.T
+    eval_y = eval_y.T
+    model = [0,0,0]
     #print(train_y.shape)
-    for clu in range(N_CLUSTERS):
-        train_x_temp = []
-        eval_x_temp = []
-        train_y_temp = []
-        eval_y_temp = []
-        for i in range(cluster_X.shape[0]):
-            if cluster_X[i]==clu:
-                train_x_temp.append(train_X[i])
-                train_y_temp.append(train_y[i])
-                
-        for i in range(cluster_eval.shape[0]):
-            if cluster_eval[i]==clu:
-                eval_x_temp.append(eval_X[i])
-                eval_y_temp.append(eval_y[i])
-        train_y_temp = np.array(train_y_temp)
-        eval_y_temp = np.array(eval_y_temp)
-        train_y_temp =train_y_temp.T
-        eval_y_temp = eval_y_temp.T
-        model = [0, 0, 0]
-        start_time = time.time()
-        #print("hhhhhhhhhh")
-        for i in range(3):
-            #print("aaaaaaaaaaaaa")
-            model[i] = xgb.XGBRegressor(max_depth=6, learning_rate=0.1, n_estimators=160, min_child_weight=1,
+    for i in range(3):
+        model[i] = xgb.XGBRegressor(max_depth=6, learning_rate=0.1, n_estimators=160, min_child_weight=1,
                                     subsample=0.8, colsample_bytree=0.8, gamma=0,
                                     reg_alpha=0, reg_lambda=1)
-            train_x_temp =np.array(train_x_temp)
-            #train_y_temp =np.array(train_y_temp[i])
-            eval_x_temp = np.array(eval_x_temp)
-            #eval_y_temp = np.array(eval_y_temp[i])
-            
-            model[i].fit(train_x_temp, train_y_temp[i],
-                    eval_set = [(eval_x_temp, eval_y_temp[i])],
+        if i==0:
+            model[i].fit(train_X, train_y[i],
+                    eval_set = [(eval_X, eval_y[i])],
                     eval_metric='mae',
                     early_stopping_rounds = 10)
-        end_time = time.time()
-       # print("eeeeeeeeeeeee")
-        time.sleep(3)
-        model_total.append(model)
-    #print("---------++++++++++++")
-    models.append(model_total)
-    #time.sleep(10)
-    return (model_total,end_time-start_time)
+        elif i==1 or i==2:
+            pre1 = model[i-1].predict(train_X)
+            tmp = []
+            for j in range(pre1.shape[0]):
+                tmp.append([pre1[j]])
+            tmp = np.array(tmp)
+            train_X = np.hstack((train_X,tmp))
+            
+            pre1 = model[i-1].predict(eval_X)
+            tmp = []
+            for j in range(pre1.shape[0]):
+                tmp.append([pre1[j]])
+            tmp = np.array(tmp)
+            eval_X = np.hstack((eval_X,tmp))
+            
+            
+            model[i].fit(train_X, train_y[i],
+                    eval_set = [(eval_X, eval_y[i])],
+                    eval_metric='mae',
+                    early_stopping_rounds = 10)
+        
+            
+            
+    models.append(model)
+    #model_total.append(model)
+    #models.append(model_total)
+    return model
+        
+    
 
 def gen_test(test_data):
     feature = []
@@ -163,34 +159,50 @@ def gen_test(test_data):
     return pred_df
 '''
 
-def evaluate(model, X, y,cluster,N_CLUSTERS):
+def evaluate(model, X, y):
     mae = 0
-    for clu in range(N_CLUSTERS):
-        X_t = []
-        y_t = [[],[],[]]
-        for i in range(cluster.shape[0]):
-            if cluster[i]==clu:
-                X_t.append(X[i])
-                y_t[0].append(y[i][0])
-                y_t[1].append(y[i][1])
-                y_t[2].append(y[i][2])
-        X_t = np.array(X_t)
-        for i in range(3):
-            y_pred = model[clu][i].predict(X_t)
-            mae += mean_absolute_error(y_t[i], y_pred)*y_pred.shape[0]
-    
+    y_t = y.T
+    lst = predict(model,X)
+    re = [[],[],[]]
+    for i in range(0,len(lst),6):
+        re[0].append(lst[i])
+        re[1].append(lst[i+1])
+        re[2].append(lst[i+2])
+    for i in range(3):
+        mae += mean_absolute_error(y_t[i],re[i])*len(re[i])
+        
     print("mae:", mae/(X.shape[0]))
     return mae/(X.shape[0])
 
-def predict(model,X_test,cluster_label,clu_number):
+def predict(model,X_test):
     lst = []
-    for i in range(X_test.shape[0]):
-        clu = cluster_label[i]
-        tti1 = model[clu][0].predict(np.array([X_test[i]]))
-        tti2 = model[clu][1].predict(np.array([X_test[i]]))
-        tti3 = model[clu][2].predict(np.array([X_test[i]]))
-        lst.extend([tti1,tti2,tti3,0,0,0])
+    lst1 = []
+    lst2 = []
+    lst3 = []
+    lst1 = model[0].predict(X_test)
+    
+    
+    pre1 = lst1
+    tmp = []
+    for j in range(pre1.shape[0]):
+        tmp.append([pre1[j]])
+    tmp = np.array(tmp)
+    X_test = np.hstack((X_test,tmp))
+    lst2 = model[1].predict(X_test)
+    
+    pre1 = lst2
+    tmp = []
+    for j in range(pre1.shape[0]):
+        tmp.append([pre1[j]])
+    tmp = np.array(tmp)
+    X_test = np.hstack((X_test,tmp))
+    lst3 = model[2].predict(X_test)
+    
+    for i in range(lst1.shape[0]):
+        lst.extend([lst1[i],lst2[i],lst3[i],0,0,0])
     return lst
+    
+
         
         
         
@@ -201,7 +213,6 @@ def main():
     mae = 0
     #pre_df_lst = [0,0,0,0,0,0,0,0,0,0,0,0]
     pre_df_lst = [0,0,0,0,0,0,0,0,0,0,0,0]
-    time_cost = 0
 
     for i in range(12):
         train_data = pd.read_csv("../datasets/train_0103_"+road_name[i]+".csv", sep=',')
@@ -212,28 +223,28 @@ def main():
         X_test = gen_test(test_data)
         y = y.T
         #PCA 
-        pca1 = PCA(n_components = 20)
-        pca2 = PCA(n_components = 20)
-        X = pca1.fit_transform(X)
-        X_test = pca2.fit_transform(X_test)
+        #pca1 = PCA(n_components = 20)
+        #pca2 = PCA(n_components = 20)
+        #X = pca1.fit_transform(X)
+        #X_test = pca2.fit_transform(X_test)
         
         
         #cluster num calculation
-        X_total = np.vstack((X,X_test))
-        N_CLUSTERS = 1
-        kmeans_model = KMeans(n_clusters = N_CLUSTERS)
-        kmeans_model.fit(X_total)
-        cluster_label = kmeans_model.labels_
+        #X_total = np.vstack((X,X_test))
+       # N_CLUSTERS = 1
+       # kmeans_model = KMeans(n_clusters = N_CLUSTERS)
+       # kmeans_model.fit(X_total)
+       # cluster_label = kmeans_model.labels_
         #print(cluster_label)
         
-        train_X, eval_X, train_y, eval_y,cluster_X,cluster_y = train_test_split(X,y,cluster_label[:X.shape[0]],test_size=0.25,random_state=1591545677)
+       # train_X, eval_X, train_y, eval_y,cluster_X,cluster_y = train_test_split(X,y,cluster_label[:X.shape[0]],test_size=0.25,random_state=1591545677)
+        train_X, eval_X, train_y, eval_y = train_test_split(X,y,test_size=0.25,random_state=1591545677)
+        #train_y.shape = (...,3)
         
-        
-        (model,time_add) = train(train_X, train_y, eval_X, eval_y, cluster_X,cluster_y,i,N_CLUSTERS)
-        time_cost += time_add
-        mae += evaluate(model, eval_X, eval_y,cluster_y,N_CLUSTERS)
+        model= train(train_X, train_y, eval_X, eval_y,i)
+        mae += evaluate(model, eval_X, eval_y)
         #print(X_test)
-        pre_df = predict(model,X_test,cluster_label[X.shape[0]:],N_CLUSTERS)
+        pre_df = predict(model,X_test)
         #print(len(pre_df),test_data.shape[0])
         test_data['predict'] = pre_df
         df = pd.DataFrame()
@@ -268,7 +279,7 @@ def main():
             assert(0)
     #print(time_cost)
     #print(result)
-    result.to_csv("../model_result/pca.csv")
+    result.to_csv("../model_result/xgb2.csv")
     #pd.DataFrame.to_csv(noLabel['pred'], "D:/test_data/pred_TTI3.csv", sep=',')
 
 if __name__ == "__main__":
