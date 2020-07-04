@@ -1,20 +1,20 @@
 # -*- coding: utf-8 -*-
 """
-Created on Fri Jun  5 20:20:19 2020
+Created on Sat Jul  4 15:35:20 2020
 
-@author: zhanghanxiao
+@author: 98061
 """
+
 #---------------------------dependencies-----------------------------
 import pandas as pd
 import numpy as np
-import xgboost as xgb
+#import xgboost as xgb
+import lightgbm as lgb
 from sklearn.model_selection import learning_curve
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import mean_absolute_error
+from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split
-# from sklearn.linear_model import LinearRegression
-# from sklearn.tree import DecisionTreeRegressor
-# from xgboost import XGBRegressor
 import matplotlib.pyplot as plt
 import time
 from copy import deepcopy
@@ -37,6 +37,18 @@ dict_road_index = {276183: 0, 276184: 1, 275911: 2,  275912: 3,
 
 models = []
 lzc = []
+params = {
+    'task': 'train',
+    'boosting_type': 'gbdt',  # 设置提升类型
+    'objective': 'regression_l1',  # 目标函数
+    'metric': {'l1'},  # 评估函数
+    'num_leaves': 31,  # 叶子节点数
+    'learning_rate': 0.1,  # 学习速率
+    'feature_fraction': 0.9,  # 建树的特征选择比例
+    'bagging_fraction': 0.8,  # 建树的样本采样比例
+    'bagging_freq': 5,  # k 意味着每 k 次迭代执行bagging
+    'verbose': 1  # <0 显示致命的, =0 显示错误 (警告), >0 显示信息
+}
 def gen_train(train_data):
     feature = []
     label = [[], [], []]
@@ -56,67 +68,12 @@ def gen_train(train_data):
     return feature, label
 
 def train(train_X, train_y, eval_X, eval_y,road_index):
-    # params = {
-    #     'booster': 'gbtree',
-    #     'objective': 'reg:gamma',
-    #     'gamma': 0.1,
-    #     'max_depth': 6,
-    #     'lambda': 3,
-    #     'subsample': 0.7,
-    #     'colsample_bytree': 0.7,
-    #     'min_child_weight': 3,
-    #     'eta': 0.1,
-    #     'seed': 1000,
-    #     'nthread': 4,
-    # }
-    # num_round = 1
-    # # plst = params.items()
-    # evallist = [(deval, 'eval'), (dtrain, 'train')]
-    # bst = xgb.train(params, dtrain, num_round, evallist)
-    # model_name = road_name[road_index] + ".model"
-    # bst.save_model(model_name)
-    # return bst
-    #model_total = []
-    train_y = train_y.T
-    eval_y = eval_y.T
-    model = [0,0,0]
-    #print(train_y.shape)
-    for i in range(3):
-        model[i] = xgb.XGBRegressor(max_depth=6, learning_rate=0.1, n_estimators=160, min_child_weight=1,
-                                    subsample=0.8, colsample_bytree=0.8, gamma=0,
-                                    reg_alpha=0, reg_lambda=1)
-        if i==0:
-            model[i].fit(train_X, train_y[i],
-                    eval_set = [(eval_X, eval_y[i])],
-                    eval_metric='mae',
-                    early_stopping_rounds = 10)
-        elif i==1 or i==2:
-            pre1 = model[i-1].predict(train_X)
-            tmp = []
-            for j in range(pre1.shape[0]):
-                tmp.append([pre1[j]])
-            tmp = np.array(tmp)
-            train_X = np.hstack((train_X,tmp))
-            
-            pre1 = model[i-1].predict(eval_X)
-            tmp = []
-            for j in range(pre1.shape[0]):
-                tmp.append([pre1[j]])
-            tmp = np.array(tmp)
-            eval_X = np.hstack((eval_X,tmp))
-            
-            
-            model[i].fit(train_X, train_y[i],
-                    eval_set = [(eval_X, eval_y[i])],
-                    eval_metric='mae',
-                    early_stopping_rounds = 10)
-        
-            
-            
-    models.append(model)
-    #model_total.append(model)
-    #models.append(model_total)
-    return model
+    rf1 = RandomForestRegressor()
+    rf1.fit(train_X,train_y)
+    models.append(rf1)
+    return rf1
+    
+    
         
     
 
@@ -133,81 +90,30 @@ def gen_test(test_data):
     feature = np.array(feature)
     return feature
     
-    
-    
-    
-'''   
-    pred_df['pred1'] = None
-    pred_df['pred2'] = None
-    pred_df['pred3'] = None
-    for row in range(0, pred_df.shape[0], 6):
-        feature = []
-        tmp = []
-        for i in range(0,6):
-            tmp.append((pred_df.iloc[row+i][0] % 86400) / 600) # related to time
-            tmp.append(pred_df.iloc[row+i][1])  # TTI
-            tmp.append(pred_df.iloc[row+i][2])  # num
-            tmp.append(pred_df.iloc[row+i][3])  # speed
-        feature.append(tmp)
-        x = np.array(feature)
-        # print(x)
-        for i in range(3):    
-            ypred = model[i].predict(x)
-            column = 'pred' + str(i+1)
-            pred_df.loc[row,column] = ypred
-    # print(pred_df)
-    return pred_df
-'''
+
 
 def evaluate(model, X, y):
     mae = 0
+    pred = model.predict(X)
+    pred = pred.T
     y_t = y.T
-    lst = predict(model,X)
-    re = [[],[],[]]
-    for i in range(0,len(lst),6):
-        re[0].append(lst[i])
-        re[1].append(lst[i+1])
-        re[2].append(lst[i+2])
     for i in range(3):
-        mae += mean_absolute_error(y_t[i],re[i])*len(re[i])
+        mae += mean_absolute_error(y_t[i], pred[i])*pred[i].shape[0]
+    
         
     print("mae:", mae/(X.shape[0]))
     return mae/(X.shape[0])
 
 def predict(model,X_test):
+    pred = model.predict(X_test)
     lst = []
-    lst1 = []
-    lst2 = []
-    lst3 = []
-    lst1 = model[0].predict(X_test)
+    for i in range(pred.shape[0]):
+        lst.extend([pred[i][0],pred[i][1],pred[i][2],0,0,0])
     
-    
-    pre1 = lst1
-    tmp = []
-    for j in range(pre1.shape[0]):
-        tmp.append([pre1[j]])
-    tmp = np.array(tmp)
-    X_test = np.hstack((X_test,tmp))
-    lst2 = model[1].predict(X_test)
-    
-    pre1 = lst2
-    tmp = []
-    for j in range(pre1.shape[0]):
-        tmp.append([pre1[j]])
-    tmp = np.array(tmp)
-    X_test = np.hstack((X_test,tmp))
-    lst3 = model[2].predict(X_test)
-    
-    for i in range(lst1.shape[0]):
-        lst.extend([lst1[i],lst2[i],lst3[i],0,0,0])
     return lst
     
 
         
-        
-        
-            
-                
 
 def main():
     mae = 0
@@ -279,7 +185,7 @@ def main():
             assert(0)
     #print(time_cost)
     #print(result)
-    result.to_csv("../model_result/xgb_test.csv")
+    result.to_csv("../model_result/modify_rf.csv")
     #pd.DataFrame.to_csv(noLabel['pred'], "D:/test_data/pred_TTI3.csv", sep=',')
 
 if __name__ == "__main__":
