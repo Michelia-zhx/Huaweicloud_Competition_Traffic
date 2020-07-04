@@ -128,11 +128,6 @@ def predict(road_id,timestamp,train_TTI,test_gps,models):
     #print(y_pred1)
     return (y_pred1,y_pred2,y_pred3)
 
-
-
-    
-    
-
 def main():
     for name in range(len(road_name)):
         print(road_name[name])

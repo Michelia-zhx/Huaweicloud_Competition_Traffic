@@ -61,19 +61,19 @@ def train(train_X, train_y, eval_X, eval_y,road_index):
                  'max_de': [[5,6,4], [6,4,6], [9,5,6], [3,4,3], [6,4,4], [2,3,7],
                             [5,6,4], [6,6,4], [5,6,4], [5,5,8], [5,6,4], [6,6,6]],
                  'min_child_wei': [[2,4,3], [1,4,1], [5,7,10], [1,9,7], [2,4,7], [2,9,9],
-                                   [9,10,6], [3,8,8], [5,6,7], [6,7,8], [5,8,7], [7,8,9]],
+                                   [9,10,6], [3,8,8], [5,6,7], [6,7,8], [5,8,7], [3,3,3]],
                  'para_gamma': [[0.13,0.19,0.08], [0.0,0.04,0.0], [0.05,0.08,0.05], [0.04,0.01,0.05], [0.03,0.05,0.1], [0.09,0.04,0.06],
-                                [0.01,0.03,0.05], [0.06,0.08,0.06], [0.01,0.02,0.0], [0.01,0.02,0.01], [0.03,0.1,0.0], [0.02,0.05,0.08]],
+                                [0.01,0.03,0.05], [0.06,0.08,0.06], [0.01,0.02,0.0], [0.01,0.02,0.01], [0.03,0.1,0.0], [0.02,0.02,0.02]],
                  'subsample': [[0.6,1.0,1.0], [0.9,0.9,1.0], [0.8,0.8,0.9], [0.7,1.0,0.7], [0.6,1.0,0.9], [0.8,0.8,0.9],
-                               [0.6,1.0,1.0], [0.6,0.7,0.8], [1.0,1.0,0.9], [0.7,0.8,1.0], [0.7,0.6,0.7], [0.7,0.7,0.9]],
+                               [0.6,1.0,1.0], [0.6,0.7,0.8], [1.0,1.0,0.9], [0.7,0.8,1.0], [0.7,0.6,0.7], [0.8,0.8,0.8]],
                  'colsample_bytree': [[0.8,1.0,1.0], [1.0,1.0,1.0], [0.8,0.8,1.0], [0.8,0.9,1.0], [0.9,1.0,1.0], [0.4,1.0,0.8],
                                       [0.9,0.7,1.0], [1.0,1.0,1.0], [0.5,1.0,1.0], [0.8,1.0,1.0], [0.9,0.9,1.0], [0.8,1.0,0.7]],
                  'reg_lambda': [[10,30,50], [0,30,0], [10,30,50], [10,10,0], [10,0,30], [10,40,50],
                                 [10,20,40], [50,50,50], [0,20,0], [20,60,50], [10,30,60], [30,60,30]],
                  'reg_alpha': [[0.7,0.0,0.6], [0.0,0.9,0.3], [0.7,0.2,0.4], [0.7,0.4,0.4], [0.7,0.3,0.0], [0.9,0.1,0.1],
-                               [0.6,0.1,0.0], [0.2,0.7,1.0], [1.0,0.0,0.7], [0.5,0.6,0.0], [0.7,0.8,0.7], [0.7,0.9,0.5]],
+                               [0.6,0.1,0.0], [0.2,0.7,1.0], [1.0,0.0,0.7], [0.5,0.6,0.0], [0.7,0.8,0.7], [0.0,0.0,0.0]],
                  'eta': [[0.2,0.3,0.1], [0.1,0.2,0.1], [0.1,0.1,0.1], [0.2,0.2,0.02], [0.1,0.07,0.1], [0.2,0.3,0.1],
-                         [0.1,0.3,0.1], [0.2,0.2,0.07], [0.3,0.2,0.1], [0.2,0.2,0.2], [0.1,0.3,0.1], [0.2,0.2,0.07]]};
+                         [0.1,0.3,0.1], [0.2,0.2,0.07], [0.3,0.2,0.1], [0.2,0.2,0.2], [0.1,0.3,0.1], [0.1,0.1,0.1]]};
     train_y = train_y.T
     eval_y = eval_y.T
     model = [0,0,0]
@@ -126,7 +126,7 @@ def train(train_X, train_y, eval_X, eval_y,road_index):
         model[i].fit(train_X, train_y[i],
                 eval_set = [(eval_X, eval_y[i])],
                 eval_metric='mae',
-                early_stopping_rounds = 50)
+                early_stopping_rounds = 10)
 
     models.append(model)
     return model
@@ -242,11 +242,10 @@ def main():
         #print(cluster_label)
         
        # train_X, eval_X, train_y, eval_y,cluster_X,cluster_y = train_test_split(X,y,cluster_label[:X.shape[0]],test_size=0.25,random_state=1591545677)
-        train_X, eval_X, train_y, eval_y = train_test_split(X, y, test_size=0.25, random_state=1591545677)
+        train_X, eval_X, train_y, eval_y = train_test_split(X, y, test_size=0.2, random_state=1591545677)
         #train_y.shape = (...,3)
         
         model = train(train_X, train_y, eval_X, eval_y,i)
-        mae += evaluate(model, eval_X, eval_y)
         #print(X_test)
         pre_df = predict(model,X_test)
         #print(len(pre_df),test_data.shape[0])
@@ -261,7 +260,6 @@ def main():
         pre_df_lst[i] = df
         #pre_df_lst[i] = gen_test(model, test_data)
         #pd.DataFrame.to_csv(pre_df_lst[i], "D:/test_data/"+road_name[i]+"_pred.csv", sep=',')
-    print(mae / 12)
     #print(pre_df_lst[0])
     #lzc = pre_df_lst[0]
     
@@ -283,7 +281,7 @@ def main():
             assert(0)
     #print(time_cost)
     #print(result)
-    result.to_csv("../model_result/xgb4.csv")
+    result.to_csv("../model_result/xgb5.csv")
     #pd.DataFrame.to_csv(noLabel['pred'], "D:/test_data/pred_TTI3.csv", sep=',')
 
 if __name__ == "__main__":
