@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
 """
-Created on Fri Jun  5 20:20:19 2020
+Created on Sat Jul  4 12:21:26 2020
 
-@author: zhanghanxiao
+@author: 98061
 """
+
 #---------------------------dependencies-----------------------------
 import pandas as pd
 import numpy as np
-import xgboost as xgb
+#import xgboost as xgb
+import lightgbm as lgb
 from sklearn.model_selection import learning_curve
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import mean_absolute_error
@@ -37,6 +39,18 @@ dict_road_index = {276183: 0, 276184: 1, 275911: 2,  275912: 3,
 
 models = []
 lzc = []
+params = {
+    'task': 'train',
+    'boosting_type': 'gbdt',  # 设置提升类型
+    'objective': 'regression_l1',  # 目标函数
+    'metric': {'l1'},  # 评估函数
+    'num_leaves': 31,  # 叶子节点数
+    'learning_rate': 0.1,  # 学习速率
+    'feature_fraction': 0.9,  # 建树的特征选择比例
+    'bagging_fraction': 0.8,  # 建树的样本采样比例
+    'bagging_freq': 5,  # k 意味着每 k 次迭代执行bagging
+    'verbose': 1  # <0 显示致命的, =0 显示错误 (警告), >0 显示信息
+}
 def gen_train(train_data):
     feature = []
     label = [[], [], []]
@@ -56,26 +70,6 @@ def gen_train(train_data):
     return feature, label
 
 def train(train_X, train_y, eval_X, eval_y,road_index):
-<<<<<<< HEAD
-    dict_para = {'n_estim': [[50,50,120], [140,50,80], [60,140,80], [50,50,150], [50,140,140], [100,50,100],
-                             [50,150,70], [120,50,150], [150,50,80], [50,70,80], [60,50,150], [50,50,80]],
-                 'max_de': [[5,6,4], [6,4,6], [9,5,6], [3,4,3], [6,4,4], [2,3,7],
-                            [5,6,4], [6,6,4], [5,6,4], [5,5,8], [5,6,4], [6,6,6]],
-                 'min_child_wei': [[2,4,3], [1,4,1], [5,7,10], [1,9,7], [2,4,7], [2,9,9],
-                                   [9,10,6], [3,8,8], [5,6,7], [6,7,8], [5,8,7], [3,3,3]],
-                 'para_gamma': [[0.13,0.19,0.08], [0.0,0.04,0.0], [0.05,0.08,0.05], [0.04,0.01,0.05], [0.03,0.05,0.1], [0.09,0.04,0.06],
-                                [0.01,0.03,0.05], [0.06,0.08,0.06], [0.01,0.02,0.0], [0.01,0.02,0.01], [0.03,0.1,0.0], [0.02,0.02,0.02]],
-                 'subsample': [[0.6,1.0,1.0], [0.9,0.9,1.0], [0.8,0.8,0.9], [0.7,1.0,0.7], [0.6,1.0,0.9], [0.8,0.8,0.9],
-                               [0.6,1.0,1.0], [0.6,0.7,0.8], [1.0,1.0,0.9], [0.7,0.8,1.0], [0.7,0.6,0.7], [0.8,0.8,0.8]],
-                 'colsample_bytree': [[0.8,1.0,1.0], [1.0,1.0,1.0], [0.8,0.8,1.0], [0.8,0.9,1.0], [0.9,1.0,1.0], [0.4,1.0,0.8],
-                                      [0.9,0.7,1.0], [1.0,1.0,1.0], [0.5,1.0,1.0], [0.8,1.0,1.0], [0.9,0.9,1.0], [0.8,1.0,0.7]],
-                 'reg_lambda': [[10,30,50], [0,30,0], [10,30,50], [10,10,0], [10,0,30], [10,40,50],
-                                [10,20,40], [50,50,50], [0,20,0], [20,60,50], [10,30,60], [30,60,30]],
-                 'reg_alpha': [[0.7,0.0,0.6], [0.0,0.9,0.3], [0.7,0.2,0.4], [0.7,0.4,0.4], [0.7,0.3,0.0], [0.9,0.1,0.1],
-                               [0.6,0.1,0.0], [0.2,0.7,1.0], [1.0,0.0,0.7], [0.5,0.6,0.0], [0.7,0.8,0.7], [0.0,0.0,0.0]],
-                 'eta': [[0.2,0.3,0.1], [0.1,0.2,0.1], [0.1,0.1,0.1], [0.2,0.2,0.02], [0.1,0.07,0.1], [0.2,0.3,0.1],
-                         [0.1,0.3,0.1], [0.2,0.2,0.07], [0.3,0.2,0.1], [0.2,0.2,0.2], [0.1,0.3,0.1], [0.1,0.1,0.1]]};
-=======
     # params = {
     #     'booster': 'gbtree',
     #     'objective': 'reg:gamma',
@@ -97,51 +91,30 @@ def train(train_X, train_y, eval_X, eval_y,road_index):
     # bst.save_model(model_name)
     # return bst
     #model_total = []
->>>>>>> b00239e514f3841696b2e119fa5cca07fede15e0
     train_y = train_y.T
     eval_y = eval_y.T
-    model = [0,0,0]
+    model = []
     #print(train_y.shape)
-    for i in range(3):
-        model[i] = xgb.XGBRegressor(max_depth=6, learning_rate=0.1, n_estimators=160, min_child_weight=1,
-                                    subsample=0.8, colsample_bytree=0.8, gamma=0,
-                                    reg_alpha=0, reg_lambda=1)
-        if i==0:
-            model[i].fit(train_X, train_y[i],
-                    eval_set = [(eval_X, eval_y[i])],
-                    eval_metric='mae',
-                    early_stopping_rounds = 10)
-        elif i==1 or i==2:
-            pre1 = model[i-1].predict(train_X)
-            tmp = []
-            for j in range(pre1.shape[0]):
-                tmp.append([pre1[j]])
-            tmp = np.array(tmp)
-            train_X = np.hstack((train_X,tmp))
-            
-            pre1 = model[i-1].predict(eval_X)
-            tmp = []
-            for j in range(pre1.shape[0]):
-                tmp.append([pre1[j]])
-            tmp = np.array(tmp)
-            eval_X = np.hstack((eval_X,tmp))
-            
-            
-            model[i].fit(train_X, train_y[i],
-                    eval_set = [(eval_X, eval_y[i])],
-                    eval_metric='mae',
-                    early_stopping_rounds = 10)
+    lgb_train1 = lgb.Dataset(train_X,train_y[0])
+    lgb_train2 = lgb.Dataset(train_X,train_y[1])
+    lgb_train3 = lgb.Dataset(train_X,train_y[2])
+    lgb_test1 = lgb.Dataset(eval_X,eval_y[0])
+    lgb_test2 = lgb.Dataset(eval_X,eval_y[1])
+    lgb_test3 = lgb.Dataset(eval_X,eval_y[2])
+    
+    gbm1 = lgb.train(params, lgb_train1, num_boost_round=50, valid_sets=lgb_test1, early_stopping_rounds=5)
+    print("---------------------")
+    gbm2 = lgb.train(params, lgb_train2, num_boost_round=50, valid_sets=lgb_test2, early_stopping_rounds=5)
+    print("---------------------")
+    gbm3 = lgb.train(params, lgb_train3, num_boost_round=50, valid_sets=lgb_test3, early_stopping_rounds=5)
+    model.append(gbm1)
+    model.append(gbm2)
+    model.append(gbm3)
+    
+    
         
-<<<<<<< HEAD
-        model[i].fit(train_X, train_y[i],
-                eval_set = [(eval_X, eval_y[i])],
-                eval_metric='mae',
-                early_stopping_rounds = 10)
-
-=======
             
             
->>>>>>> b00239e514f3841696b2e119fa5cca07fede15e0
     models.append(model)
     #model_total.append(model)
     #models.append(model_total)
@@ -162,81 +135,30 @@ def gen_test(test_data):
     feature = np.array(feature)
     return feature
     
-    
-    
-    
-'''   
-    pred_df['pred1'] = None
-    pred_df['pred2'] = None
-    pred_df['pred3'] = None
-    for row in range(0, pred_df.shape[0], 6):
-        feature = []
-        tmp = []
-        for i in range(0,6):
-            tmp.append((pred_df.iloc[row+i][0] % 86400) / 600) # related to time
-            tmp.append(pred_df.iloc[row+i][1])  # TTI
-            tmp.append(pred_df.iloc[row+i][2])  # num
-            tmp.append(pred_df.iloc[row+i][3])  # speed
-        feature.append(tmp)
-        x = np.array(feature)
-        # print(x)
-        for i in range(3):    
-            ypred = model[i].predict(x)
-            column = 'pred' + str(i+1)
-            pred_df.loc[row,column] = ypred
-    # print(pred_df)
-    return pred_df
-'''
+
 
 def evaluate(model, X, y):
     mae = 0
     y_t = y.T
-    lst = predict(model,X)
-    re = [[],[],[]]
-    for i in range(0,len(lst),6):
-        re[0].append(lst[i])
-        re[1].append(lst[i+1])
-        re[2].append(lst[i+2])
     for i in range(3):
-        mae += mean_absolute_error(y_t[i],re[i])*len(re[i])
+        y_pred = model[i].predict(X, num_iteration=model[i].best_iteration)
+        mae += mean_absolute_error(y_t[i], y_pred)*y_pred.shape[0]
+    
         
     print("mae:", mae/(X.shape[0]))
     return mae/(X.shape[0])
 
 def predict(model,X_test):
+    lst1  = model[0].predict(X_test, num_iteration=model[0].best_iteration)
+    lst2  = model[1].predict(X_test, num_iteration=model[1].best_iteration)
+    lst3  = model[2].predict(X_test, num_iteration=model[2].best_iteration)
     lst = []
-    lst1 = []
-    lst2 = []
-    lst3 = []
-    lst1 = model[0].predict(X_test)
-    
-    
-    pre1 = lst1
-    tmp = []
-    for j in range(pre1.shape[0]):
-        tmp.append([pre1[j]])
-    tmp = np.array(tmp)
-    X_test = np.hstack((X_test,tmp))
-    lst2 = model[1].predict(X_test)
-    
-    pre1 = lst2
-    tmp = []
-    for j in range(pre1.shape[0]):
-        tmp.append([pre1[j]])
-    tmp = np.array(tmp)
-    X_test = np.hstack((X_test,tmp))
-    lst3 = model[2].predict(X_test)
-    
     for i in range(lst1.shape[0]):
         lst.extend([lst1[i],lst2[i],lst3[i],0,0,0])
     return lst
     
 
         
-        
-        
-            
-                
 
 def main():
     mae = 0
@@ -267,10 +189,11 @@ def main():
         #print(cluster_label)
         
        # train_X, eval_X, train_y, eval_y,cluster_X,cluster_y = train_test_split(X,y,cluster_label[:X.shape[0]],test_size=0.25,random_state=1591545677)
-        train_X, eval_X, train_y, eval_y = train_test_split(X, y, test_size=0.2, random_state=1591545677)
+        train_X, eval_X, train_y, eval_y = train_test_split(X,y,test_size=0.25,random_state=1591545677)
         #train_y.shape = (...,3)
         
-        model = train(train_X, train_y, eval_X, eval_y,i)
+        model= train(train_X, train_y, eval_X, eval_y,i)
+        mae += evaluate(model, eval_X, eval_y)
         #print(X_test)
         pre_df = predict(model,X_test)
         #print(len(pre_df),test_data.shape[0])
@@ -285,6 +208,7 @@ def main():
         pre_df_lst[i] = df
         #pre_df_lst[i] = gen_test(model, test_data)
         #pd.DataFrame.to_csv(pre_df_lst[i], "D:/test_data/"+road_name[i]+"_pred.csv", sep=',')
+    print(mae / 12)
     #print(pre_df_lst[0])
     #lzc = pre_df_lst[0]
     
@@ -306,11 +230,7 @@ def main():
             assert(0)
     #print(time_cost)
     #print(result)
-<<<<<<< HEAD
-    result.to_csv("../model_result/xgb5.csv")
-=======
-    result.to_csv("../model_result/xgb_test.csv")
->>>>>>> b00239e514f3841696b2e119fa5cca07fede15e0
+    result.to_csv("../model_result/lgbm_test.csv")
     #pd.DataFrame.to_csv(noLabel['pred'], "D:/test_data/pred_TTI3.csv", sep=',')
 
 if __name__ == "__main__":

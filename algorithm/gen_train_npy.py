@@ -44,29 +44,16 @@ def gen_train(train_data):
     label = np.array(label)
     return feature, label
 
-def gen_test(test_data):
-    feature = []
-    for row in range(6, train_data.shape[0]-2):
-        tmp = []
-        for i in range(6,0,-1):
-            tmp.append((test_data.iloc[row-i][0] % 86400) / 600) # related to time
-            tmp.append(test_data.iloc[row-i][1])  # TTI
-            tmp.append(test_data.iloc[row-i][2])  # num
-            tmp.append(test_data.iloc[row-i][3])  # speed
-        feature.append(tmp)
-    feature = np.array(feature)
-    return feature
-
 def main():
     for i in range(len(road_name)):
-        train_data = pd.read_csv("../datasets/_"+road_name[i]+".csv", sep=',')
+        train_data = pd.read_csv("../datasets/train_12_"+road_name[i]+".csv", sep=',')
         train_data = train_data.sort_values(by = 'timestamp')
         X, y = gen_train(train_data)
-        X_filename = 'test_array/X_12_' + road_name[i] + '.npy'
+        X_filename = 'train_array/X_12_' + road_name[i] + '.npy'
         np.save(X_filename, X)
-        y_filename = 'test_array/y_12_' + road_name[i] + '.npy'
+        y_filename = 'train_array/y_12_' + road_name[i] + '.npy'
         np.save(y_filename, y)
-        print("save train: ", i)
+        print("save", i)
 
 if __name__ == "__main__":
     main()
