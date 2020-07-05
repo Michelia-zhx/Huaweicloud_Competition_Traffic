@@ -166,12 +166,14 @@ def main():
     pre_df_lst = [0,0,0,0,0,0,0,0,0,0,0,0]
 
     for i in range(12):
-        train_data = pd.read_csv("../datasets/train_0103_"+road_name[i]+".csv", sep=',')
-        train_data = train_data.sort_values(by = 'timestamp')
-        test_data = pd.read_csv("../datasets/stage2_test_"+road_name[i]+".csv", sep=',')
-        test_data = test_data.sort_values(by = 'timestamp')
-        X, y = gen_train(train_data)#np array
-        X_test = gen_test(test_data)
+        #train_data = pd.read_csv("../datasets/train_0103_"+road_name[i]+".csv", sep=',')
+        #train_data = train_data.sort_values(by = 'timestamp')
+        #test_data = pd.read_csv("../datasets/stage2_test_"+road_name[i]+".csv", sep=',')
+        #test_data = test_data.sort_values(by = 'timestamp')
+        #X, y = gen_train(train_data)#np array
+        #X_test = gen_test(test_data)
+        
+    
         y = y.T
         #PCA 
         #pca1 = PCA(n_components = 20)
