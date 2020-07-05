@@ -71,7 +71,7 @@ def gen_train(train_data,road_index):
         tmp = []
         rel = [[],[],[]]
         yesterday = []
-        last_week = []
+        # last_week = []
         time_start = train_data.iloc[row-6][0]
         try:
             for add in range(0,3600,600):
@@ -102,29 +102,28 @@ def gen_train(train_data,road_index):
             time_yesterday = time_start - 24*60*60
             for add in range(0,3600,600):
                 ts = time_yesterday + add
-                yesterday.extend([train_data.loc[time_yesterday]['TTI'],train_data.loc[time_yesterday]['car_count'],train_data.loc[time_yesterday]['speed']])
+                yesterday.extend([train_data.loc[ts]['TTI'],train_data.loc[ts]['car_count'],train_data.loc[ts]['speed']])
             tmp.extend(yesterday)
         except:
             continue
         #get next 18dim
-        try:
-            time_week = time_start - 24*60*60*7
-            for add in range(0,3600,600):
-                ts = time_week + add
-                last_week.extend([train_data.loc[time_week]['TTI'],train_data.loc[time_week]['car_count'],train_data.loc[time_week]['speed']])
-            tmp.extend(last_week)
-        except:
-            continue
+        # try:
+        #     time_lastweek = time_start - 24*60*60*7
+        #     for add in range(0,3600,600):
+        #         ts = time_lastweek + add
+        #         last_week.extend([train_data.loc[ts]['TTI'],train_data.loc[ts]['car_count'],train_data.loc[ts]['speed']])
+        #     tmp.extend(last_week)
+        # except:
+        #     continue
         #get last 2 dim
         tmp.append(get_day(time_start))
         tmp.append((time_start % 86400) / 600)
-        
-       
         
         feature.append(tmp)
         label[0].append(train_data.iloc[row][1])
         label[1].append(train_data.iloc[row+1][1])
         label[2].append(train_data.iloc[row+2][1])
+
     feature = np.array(feature)
     label = np.array(label)
     return feature, label
