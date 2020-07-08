@@ -48,9 +48,9 @@ def gen_train(train_data,road_index):
     in2 = related_roads[road_index][1]
     out = related_roads[road_index][2]
     
-    df_in1 = pd.read_csv("../datasets/train_0103_"+road_name[in1]+".csv")
-    df_in2 = pd.read_csv("../datasets/train_0103_"+road_name[in2]+".csv")
-    df_out = pd.read_csv("../datasets/train_0103_"+road_name[out]+".csv")
+    df_in1 = pd.read_csv("../datasets/train_01_"+road_name[in1]+".csv")
+    df_in2 = pd.read_csv("../datasets/train_01_"+road_name[in2]+".csv")
+    df_out = pd.read_csv("../datasets/train_01_"+road_name[out]+".csv")
     
     df_in1 = df_in1.sort_values(by='timestamp')
     df_in1.index = df_in1.timestamp
@@ -129,15 +129,15 @@ def gen_train(train_data,road_index):
     return feature, label
 
 def main():
-    for i in range(1,len(road_name)):
+    for i in range(0,len(road_name)):
         print("start to process",road_name[i],sep = ' ')
-        train_data = pd.read_csv("../datasets/train_0103_"+road_name[i]+".csv", sep=',')
+        train_data = pd.read_csv("../datasets/train_01_"+road_name[i]+".csv", sep=',')
         train_data = train_data.sort_values(by = 'timestamp')
         train_data.index = train_data.timestamp
         X, y = gen_train(train_data,i)
-        X_filename = 'train_array/X_0103_' + road_name[i] + '.npy'
+        X_filename = 'train_array/X_01_' + road_name[i] + '.npy'
         np.save(X_filename, X)
-        y_filename = 'train_array/y_0103_' + road_name[i] + '.npy'
+        y_filename = 'train_array/y_01_' + road_name[i] + '.npy'
         np.save(y_filename, y)
         print("save", i)
 

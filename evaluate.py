@@ -7,8 +7,8 @@ Created on Thu Jul  2 15:47:09 2020
 import pandas as pd
 import numpy as np
 import math
-tti5 = pd.read_csv('./model_result/xgb.csv')
-tti3 =pd.read_csv('./model_result/xgb2.csv')
+tti5 = pd.read_csv('./model_result/lgbm0708.csv')
+tti3 =pd.read_csv('./model_result/lgbm_test3_1872.csv')
 #noLabel  = pd.read_csv("D:/HW_AI_traffic/Huaweicloud_Competition_Traffic/traffic/toPredict_noLabel.csv")
     
 count = 0

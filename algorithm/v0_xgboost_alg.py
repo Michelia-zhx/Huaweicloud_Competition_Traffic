@@ -20,6 +20,7 @@ import time
 from copy import deepcopy
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
 #---------------------------const value -----------------------------
 road_name = ['NanPing_W2E', 'NanPing_E2W', 'FuLong_S2N', 'FuLong_N2S', 'LiuXian_W2E', 'LiuXian_E2W',
              'YuLong_S2N', 'YuLong_N2S', 'XinQu_S2N', 'XinQu_N2S', 'ZhiYuan_S2N', 'ZhiYuan_N2S']
@@ -56,7 +57,7 @@ def gen_train(train_data):
     return feature, label
 
 def train(train_X, train_y, eval_X, eval_y,road_index):
-<<<<<<< HEAD
+
     dict_para = {'n_estim': [[50,50,120], [140,50,80], [60,140,80], [50,50,150], [50,140,140], [100,50,100],
                              [50,150,70], [120,50,150], [150,50,80], [50,70,80], [60,50,150], [50,50,80]],
                  'max_de': [[5,6,4], [6,4,6], [9,5,6], [3,4,3], [6,4,4], [2,3,7],
@@ -75,7 +76,7 @@ def train(train_X, train_y, eval_X, eval_y,road_index):
                                [0.6,0.1,0.0], [0.2,0.7,1.0], [1.0,0.0,0.7], [0.5,0.6,0.0], [0.7,0.8,0.7], [0.0,0.0,0.0]],
                  'eta': [[0.2,0.3,0.1], [0.1,0.2,0.1], [0.1,0.1,0.1], [0.2,0.2,0.02], [0.1,0.07,0.1], [0.2,0.3,0.1],
                          [0.1,0.3,0.1], [0.2,0.2,0.07], [0.3,0.2,0.1], [0.2,0.2,0.2], [0.1,0.3,0.1], [0.1,0.1,0.1]]};
-=======
+
     # params = {
     #     'booster': 'gbtree',
     #     'objective': 'reg:gamma',
@@ -97,7 +98,7 @@ def train(train_X, train_y, eval_X, eval_y,road_index):
     # bst.save_model(model_name)
     # return bst
     #model_total = []
->>>>>>> b00239e514f3841696b2e119fa5cca07fede15e0
+
     train_y = train_y.T
     eval_y = eval_y.T
     model = [0,0,0]
@@ -132,16 +133,13 @@ def train(train_X, train_y, eval_X, eval_y,road_index):
                     eval_metric='mae',
                     early_stopping_rounds = 10)
         
-<<<<<<< HEAD
+
         model[i].fit(train_X, train_y[i],
                 eval_set = [(eval_X, eval_y[i])],
                 eval_metric='mae',
                 early_stopping_rounds = 10)
 
-=======
-            
-            
->>>>>>> b00239e514f3841696b2e119fa5cca07fede15e0
+
     models.append(model)
     #model_total.append(model)
     #models.append(model_total)
@@ -244,13 +242,41 @@ def main():
     pre_df_lst = [0,0,0,0,0,0,0,0,0,0,0,0]
 
     for i in range(12):
-        train_data = pd.read_csv("../datasets/train_0103_"+road_name[i]+".csv", sep=',')
+        '''train_data = pd.read_csv("../datasets/train_0103_"+road_name[i]+".csv", sep=',')
         train_data = train_data.sort_values(by = 'timestamp')
         test_data = pd.read_csv("../datasets/stage2_test_"+road_name[i]+".csv", sep=',')
         test_data = test_data.sort_values(by = 'timestamp')
         X, y = gen_train(train_data)#np array
         X_test = gen_test(test_data)
         y = y.T
+        '''
+        test_data = pd.read_csv("../datasets/stage2_test_"+road_name[i]+".csv", sep=',')
+        test_data = test_data.sort_values(by = 'timestamp')
+        #X, y = gen_train(train_data)#np array
+        #X_test = gen_test(test_data)
+        X_filename = 'train_array/X_0103_' + road_name[i] + '.npy'
+        X = np.load(X_filename)
+        X = X.T
+        for j in range(1,90,3):
+            X[j] = X[j]*0.01
+            
+        y_filename = 'train_array/y_0103_' + road_name[i] + '.npy'
+        y = np.load(y_filename)
+        y = y.T
+        X_test_file = 'train_array/test_X_0103_' + road_name[i] + '.npy'
+        X_test = np.load(X_test_file)
+        X_test = X_test.T
+        for j in range(1,90,3):
+            X_test[j] = X_test[j]*0.01
+        X = X.T
+        X_test = X_test.T
+        '''
+        scaler = StandardScaler()
+        scaler.fit(X)
+        X = scaler.transform(X)
+        scaler.fit(X_test)
+        X_test = scaler.transform(X_test)
+        '''
         #PCA 
         #pca1 = PCA(n_components = 20)
         #pca2 = PCA(n_components = 20)
@@ -306,11 +332,11 @@ def main():
             assert(0)
     #print(time_cost)
     #print(result)
-<<<<<<< HEAD
-    result.to_csv("../model_result/xgb5.csv")
-=======
-    result.to_csv("../model_result/xgb_test.csv")
->>>>>>> b00239e514f3841696b2e119fa5cca07fede15e0
+
+    #result.to_csv("../model_result/xgb5.csv")
+
+    result.to_csv("../model_result/xgb10.csv")
+
     #pd.DataFrame.to_csv(noLabel['pred'], "D:/test_data/pred_TTI3.csv", sep=',')
 
 if __name__ == "__main__":

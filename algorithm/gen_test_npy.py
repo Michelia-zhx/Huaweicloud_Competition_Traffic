@@ -107,8 +107,10 @@ def gen_test(train_data,road_index):
                 yesterday.extend([train_data.loc[ts]['TTI'],train_data.loc[ts]['car_count'],train_data.loc[ts]['speed']])
             tmp.extend(yesterday)
         except:
-            print("fail to try2:", row)
-            continue
+            for i in range(6,0,-1):
+                tmp.append(train_data.iloc[row-i][1])  # TTI
+                tmp.append(train_data.iloc[row-i][2])  # num
+                tmp.append(train_data.iloc[row-i][3])  # speed
         #get next 18dim
         # try:
         #     time_lastweek = time_start - 24*60*60*7

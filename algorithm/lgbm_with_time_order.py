@@ -199,13 +199,26 @@ def main():
     pre_df_lst = [0,0,0,0,0,0,0,0,0,0,0,0]
 
     for i in range(12):
-        train_data = pd.read_csv("../datasets/train_0103_"+road_name[i]+".csv", sep=',')
-        train_data = train_data.sort_values(by = 'timestamp')
         test_data = pd.read_csv("../datasets/stage2_test_"+road_name[i]+".csv", sep=',')
         test_data = test_data.sort_values(by = 'timestamp')
-        X, y = gen_train(train_data)#np array
-        X_test = gen_test(test_data)
+        #X, y = gen_train(train_data)#np array
+        #X_test = gen_test(test_data)
+        X_filename = 'train_array/X_0103_' + road_name[i] + '.npy'
+        X = np.load(X_filename)
+        X = X.T
+        for j in range(1,90,3):
+            X[j] = X[j]*0.01
+            
+        y_filename = 'train_array/y_0103_' + road_name[i] + '.npy'
+        y = np.load(y_filename)
         y = y.T
+        X_test_file = 'train_array/test_X_0103_' + road_name[i] + '.npy'
+        X_test = np.load(X_test_file)
+        X_test = X_test.T
+        for j in range(1,90,3):
+            X_test[j] = X_test[j]*0.01
+        X = X.T
+        X_test = X_test.T
         #PCA 
         #pca1 = PCA(n_components = 20)
         #pca2 = PCA(n_components = 20)
@@ -263,7 +276,7 @@ def main():
             assert(0)
     #print(time_cost)
     #print(result)
-    result.to_csv("../model_result/lgbm_test3.csv")
+    result.to_csv("../model_result/lgbm0708.csv")
     #pd.DataFrame.to_csv(noLabel['pred'], "D:/test_data/pred_TTI3.csv", sep=',')
 
 if __name__ == "__main__":
